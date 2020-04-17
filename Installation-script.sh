@@ -184,7 +184,7 @@ fi
 
 ## Docker directories, daemon.json and /etc/hosts file checkup
 
-grep -qxF 'include "127.0.0.1 localhost artifactory docker-virtual.artifactory docker-local.artifactory"' /etc/hosts || echo "127.0.0.1 localhost artifactory docker-virtual.artifactory docker-local.artifactory" >> /etc/hosts
+grep "127.0.0.1 localhost artifactory docker-virtual.artifactory docker-local.artifactory" /etc/hosts || echo "127.0.0.1 localhost artifactory docker-virtual.artifactory docker-local.artifactory" >> /etc/hosts
 
 if [ -d /etc/docker ]; then
   echo "INFO: The '/etc/docker' directory already exists"
