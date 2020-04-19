@@ -4,7 +4,7 @@ This repository provides a script to install and configure Artifactory Standalon
 ### To use the script, apply executable permissions to the file
 
 ```
-$ chmod +x artifactory-docker-registry.sh
+$ chmod +x install-script.sh
 ```
 
 ## Menu Selections
