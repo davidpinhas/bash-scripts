@@ -1,8 +1,5 @@
 #!/bin/bash
 
-### To-do
-# Let users choose artifactory version
-
 ## Verify root
 
 if [[ $(/usr/bin/id -u) -ne 0 ]]; then
