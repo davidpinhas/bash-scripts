@@ -1,12 +1,20 @@
 #!/bin/bash
-#Artifactory license
+
+# Verify root
+
+if [[ $(/usr/bin/id -u) -ne 0 ]]; then
+    echo "WARN: Not Sudo user. Please run as root."
+    exit
+fi
 
 #Setting environment variables
 #export MASTER_KEY=$(openssl rand -hex 32)
 #export JOIN_KEY=$(openssl rand -hex 32)
 #export JFROG_URL=$(kubectl describe svc artifactory-ha-nginx | grep Ingress | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
-export GCP_EXTERNAL_IP=$(curl -H "Metadata-Flavor: Google" http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip)
-sudo rm -rf values.yaml
+export GCP_EXTERNAL_IP=$(curl -H "Metadata-Flavor: Google" http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip) > /dev/null 2>&1
+
+# Creating values.yaml file
+
 cat <<EOF > values.yaml
 
 artifactory:
@@ -32,6 +40,8 @@ postgresql:
     maxConnections: "350"
 EOF
 
+# Create Nginx and Ingress service.yaml file
+
 cat <<EOF > service.yaml
 nginx:
   service:
@@ -56,19 +66,38 @@ ingress:
       hosts:
         - artifactory.org
 EOF
-#Artifactory installation
+
+echo "
+##########################################
+### Artifactory HA installation on K8s ###
+##########################################
+
+This script works on Ubuntu 18.04 GCP instances.
+To start preparing your machine as a Kubernetes cluster, please provide 3 Artifactory licenses.
+Important Note - All three Artifactory licenses must be the same type (E+, Enterprise, etc..)
+"
+# Retrieving Artifactory licenses
+
 echo "Provide the License Key:"
-echo "After copying the license, write the sign '~' at the end of the license and press Enter"
+echo "After copying the license, write the sign '~' at the end of the license and press Enter
+"
 read  -d "~" LICENSE
 export INPUT="$LICENSE"
-echo "Provide the a second License Key:"
-echo "After copying the license, write the sign '~' at the end of the license and press Enter"
+echo "
+Provide the a second License Key:"
+echo "After copying the license, write the sign '~' at the end of the license and press Enter
+"
 read  -d "~" LICENSE2
 export INPUT2="$LICENSE2"
-echo "Provide the a third License Key:"
-echo "After copying the license, write the sign '~' at the end of the license and press Enter"
+echo "
+Provide the a third License Key:"
+echo "After copying the license, write the sign '~' at the end of the license and press Enter
+"
 read  -d "~" LICENSE3
 export INPUT3="$LICENSE3"
+
+# Create art.lic file with the provided licenses
+
 cat <<EOF > art.lic
 $INPUT
 
@@ -78,45 +107,97 @@ $INPUT3
 EOF
 
 # Installing Docker client
-sudo apt update
-sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
-sudo apt update
-apt-cache policy docker-ce
-sudo apt install docker-ce -y
-# Installing Helm client
-wget https://get.helm.sh/helm-v3.2.0-linux-amd64.tar.gz
-tar xvf helm-v3.2.0-linux-amd64.tar.gz
-sudo mv linux-amd64/helm /usr/local/bin/
-rm helm-v3.2.0-linux-amd64.tar.gz
-rm -rf linux-amd64
-# Installing kubectl
-curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
-curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
-chmod +x ./kubectl
-sudo mv ./kubectl /usr/local/bin/kubectl
-# Installing Minikube
-echo virtualbox-ext-pack virtualbox-ext-pack/license select true | sudo debconf-set-selections
-sudo apt install virtualbox virtualbox-ext-pack -y
-wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-chmod +x minikube-linux-amd64
-sudo mv minikube-linux-amd64 /usr/local/bin/minikube
-helm repo add jfrog https://charts.jfrog.io # Adding JFrog helm repo
-helm repo update
-minikube start --cpus 6 --memory 10240 --kubernetes-version='v1.16.4' --driver=none # Starting Minikube
-minikube addons enable ingress
 
-kubectl create secret generic artifactory-cluster-license --from-file=art.lic
-helm install artifactory-ha -f service.yaml -f values.yaml --set artifactory.license.secret=artifactory-cluster-license,artifactory.license.dataKey=art.lic --set nginx.service.type=NodePort jfrog/artifactory-ha
-grep "$GCP_EXTERNAL_IP artifactory.org" /etc/hosts || echo "$GCP_EXTERNAL_IP artifactory.org" >> /etc/hosts
+if ! [ -x "$(command -v docker)" ]; then
+  echo '
+INFO: Docker not installed. Installing Docker client.' >&2
+  sudo apt update > /dev/null 2>&1
+  sudo apt install apt-transport-https ca-certificates curl software-properties-common -y > /dev/null 2>&1
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - > /dev/null 2>&1
+  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" > /dev/null 2>&1
+  sudo apt update > /dev/null 2>&1
+  apt-cache policy docker-ce > /dev/null 2>&1
+  sudo apt install docker-ce -y > /dev/null 2>&1
+else
+  echo "
+Docker client already installed."
+fi
+
+# Installing Helm client
+
+if ! [ -x "$(command -v helm)" ]; then
+  echo 'INFO: Helm not installed. Installing Helm.' >&2
+  wget https://get.helm.sh/helm-v3.2.0-linux-amd64.tar.gz > /dev/null 2>&1
+  tar xvf helm-v3.2.0-linux-amd64.tar.gz > /dev/null 2>&1
+  sudo mv linux-amd64/helm /usr/local/bin/ > /dev/null 2>&1
+  rm helm-v3.2.0-linux-amd64.tar.gz > /dev/null 2>&1
+  rm -rf linux-amd64 > /dev/null 2>&1
+else
+  echo "Helm already installed."
+fi
+
+# Installing kubectl
+
+if ! [ -x "$(command -v kubectl)" ]; then
+  echo 'INFO: kubectl not installed. Installing kubectl.' >&2
+  curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl > /dev/null 2>&1
+  curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl > /dev/null 2>&1
+  chmod +x ./kubectl > /dev/null 2>&1
+  sudo mv ./kubectl /usr/local/bin/kubectl > /dev/null 2>&1
+else
+  echo "kubectl already installed."
+fi
+
+# Installing Minikube
+
+if ! [ -x "$(command -v minikube)" ]; then
+  echo 'INFO: Minikube not installed. Installing Minikube.' >&2
+  echo virtualbox-ext-pack virtualbox-ext-pack/license select true | sudo debconf-set-selections
+  sudo apt install virtualbox virtualbox-ext-pack -y > /dev/null 2>&1
+  wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 > /dev/null 2>&1
+  chmod +x minikube-linux-amd64 > /dev/null 2>&1
+  sudo mv minikube-linux-amd64 /usr/local/bin/minikube > /dev/null 2>&1
+  helm repo add jfrog https://charts.jfrog.io > /dev/null 2>&1 # Adding JFrog helm repo
+  helm repo update > /dev/null 2>&1
+  minikube start --cpus 6 --memory 10240 --kubernetes-version='v1.16.4' --driver=none > /dev/null 2>&1 # Starting Minikube
+  minikube addons enable ingress > /dev/null 2>&1
+else
+  echo "Minikube already installed."
+fi
 
 echo "
+#######################################
+### Deploying Artifactory HA on K8s ###
+#######################################
+"
+
+kubectl create secret generic artifactory-cluster-license --from-file=art.lic # Creating a secret using the art.lic file
+
+helm install artifactory-ha -f service.yaml -f values.yaml --set artifactory.license.secret=artifactory-cluster-license,artifactory.license.dataKey=art.lic --set nginx.service.type=NodePort jfrog/artifactory-ha
+
+grep "$GCP_EXTERNAL_IP artifactory.org" /etc/hosts > /dev/null 2>&1 || echo "$GCP_EXTERNAL_IP artifactory.org" >> /etc/hosts # Adding External GCP IP Address to /etc/hosts
+
+if ! [ -d k8s-files ]; then
+sudo mkdir k8s-files
+fi
+mv art.lic k8s-files/
+mv service.yaml k8s-files/
+mv values.yaml k8s-files/
+echo "
+The deployment has finished successfuly, this will take 4 minutes.."
+sleep 240
+
+echo "
+##################################
+### Deployment was successful! ###
+##################################
+
 Awesome mister guy/gal, everything should work in a few minutes.
-All you need to do is edit your local machine's '/etc/hosts' file and add the machine IP:
+While your cluster is starting up, you'll need to edit your local machine's '/etc/hosts' file and add the machine IP:
+
 $GCP_EXTERNAL_IP artifactory.org
 
-Now you can access artifactory.org from your local machine :)
+Now you can access http://artifactory.org from your local machine :)
 "
 
 #Xray installation
