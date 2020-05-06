@@ -9,7 +9,8 @@ $ chmod +x artifactory-ha-k8s.sh
 
 ## System requirements
 
-The script will run on GCP instance Ubunt 18.04 with the following specs:<br/>
+This script works on GCP with the following specs:<br/>
+Ubuntu 18.04 Image<br/>
 6 CPU Cores<br/>
 10GB Memory<br/>
 #### IMPORTANT NOTE: All three Artifactory licenses must be the same type (E+, Enterprise, etc..)
