@@ -9,7 +9,7 @@ $ chmod +x artifactory-ha-k8s.sh
 
 ## System requirements
 
-This script works on GCP with the following specs:<br/>
+This script works on GCP with the following minimum requirements:<br/>
 Ubuntu 18.04 Image<br/>
 6 CPU Cores<br/>
 10GB Memory<br/>
