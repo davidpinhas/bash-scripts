@@ -13,4 +13,5 @@ This script works on GCP with the following minimum requirements:<br/>
 Ubuntu 18.04 Image<br/>
 6 CPU Cores<br/>
 10GB Memory<br/>
+25GB Image size<br/>
 #### IMPORTANT NOTE: All three Artifactory licenses must be the same type (E+, Enterprise, etc..)
