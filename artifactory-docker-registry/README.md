@@ -26,7 +26,7 @@ Access Method:
 This script supports installation of Artifactory versions 6.15.0 and above, due to the support blocking Schema 1 requests that was introduced in [version 6.15.0](https://www.jfrog.com/confluence/display/RTF6X/Release+Notes#ReleaseNotes-Artifactory6.15).<br/>
 Important Note - Running this script will delete all Docker containers associated with the Artifactory service, including Nginx and PostgreSQL. Using the script on a new GCP instance is preferable.<br/>
 
-#### System requirements
+#### System requirements:
 
 4 CPU Cores<br/>
 8GB Memory<br/>
