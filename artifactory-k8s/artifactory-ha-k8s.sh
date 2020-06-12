@@ -3,18 +3,46 @@
 # Verify root
 
 if [[ $(/usr/bin/id -u) -ne 0 ]]; then
-    echo "WARN: Not Sudo user. Please run as root."
-    exit
+  echo "WARN: Not Sudo user. Please run as root."
+  exit
 fi
 
 #Setting environment variables
 #export MASTER_KEY=$(openssl rand -hex 32)
 #export JOIN_KEY=$(openssl rand -hex 32)
 #export JFROG_URL=$(kubectl describe svc artifactory-ha-nginx | grep Ingress | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
-export GCP_EXTERNAL_IP=$(curl -H "Metadata-Flavor: Google" http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip) > /dev/null 2>&1
+export GCP_EXTERNAL_IP=$(curl -H "Metadata-Flavor: Google" http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip)
+
+echo "
+###############################################
+### Minikube environment preperation script ###
+###############################################
+
+This script will prepare a Kubernetes environemnt and deploy an Artifactory HA cluster.
+The script works on Ubuntu 18.04 GCP VMs.
+
+To deploy Artifactory HA cluster, please provide 3 Artifactory licenses.
+Important Note - All three Artifactory licenses must be the same type (E+, Enterprise, etc..)"
+
+echo "
+Do you wish to prepare a Kubernetes cluster or prepare a cluster and deploy Artifactory HA:"
+menu_init ()
+{
+select init; do
+if [ 1 -le "$REPLY" ] && [ "$REPLY" -le $# ];
+then
+echo "INFO: We are going to $init"
+break;
+else
+echo "WARN: Wrong selection: Select any number from 1-$#"
+fi
+done
+}
+init_type=('Prepare a Kubernetes environment' 'Prepare and deploy Artifactory HA')
+menu_init "${init_type[@]}"
 
 # Creating values.yaml file
-
+echo "INFO: Creating values.yaml file."
 cat <<EOF > values.yaml
 
 artifactory:
@@ -42,6 +70,7 @@ EOF
 
 # Create Nginx and Ingress service.yaml file
 
+echo "INFO: Creating service.yaml file."
 cat <<EOF > service.yaml
 nginx:
   service:
@@ -67,17 +96,8 @@ ingress:
         - artifactory.org
 EOF
 
-echo "
-##########################################
-### Artifactory HA installation on K8s ###
-##########################################
-
-This script works on Ubuntu 18.04 GCP instances.
-To start preparing your machine as a Kubernetes cluster, please provide 3 Artifactory licenses.
-Important Note - All three Artifactory licenses must be the same type (E+, Enterprise, etc..)
-"
 # Retrieving Artifactory licenses
-
+if [ "$init" = "Prepare and deploy Artifactory HA" ]; then
 echo "Provide the License Key:"
 echo "After copying the license, write the sign '~' at the end of the license and press Enter
 "
@@ -98,13 +118,22 @@ export INPUT3="$LICENSE3"
 
 # Create art.lic file with the provided licenses
 
+echo "
+
+INFO: Creating art.lic file."
 cat <<EOF > art.lic
-$INPUT
+  $INPUT
 
-$INPUT2
+  $INPUT2
 
-$INPUT3
+  $INPUT3
 EOF
+fi
+
+echo "
+############################################
+### Preparing the Kubernetes environment ###
+############################################"
 
 # Installing Docker client
 
@@ -120,6 +149,7 @@ INFO: Docker not installed. Installing Docker client.' >&2
   sudo apt install docker-ce -y > /dev/null 2>&1
 else
   echo "
+
 Docker client already installed."
 fi
 
@@ -159,46 +189,62 @@ if ! [ -x "$(command -v minikube)" ]; then
   sudo mv minikube-linux-amd64 /usr/local/bin/minikube > /dev/null 2>&1
   helm repo add jfrog https://charts.jfrog.io > /dev/null 2>&1 # Adding JFrog helm repo
   helm repo update > /dev/null 2>&1
+  echo "INFO: Starting Minikube"
   minikube start --cpus 6 --memory 10240 --kubernetes-version='v1.16.4' --driver=none > /dev/null 2>&1 # Starting Minikube
+  sleep 5
   minikube addons enable ingress > /dev/null 2>&1
 else
   echo "Minikube already installed."
 fi
 
-echo "
+if [ "$init" = "Prepare and deploy Artifactory HA" ]; then
+  echo "
 #######################################
 ### Deploying Artifactory HA on K8s ###
 #######################################
 "
+  echo "INFO: Creating a secret."
+  kubectl create secret generic artifactory-cluster-license --from-file=art.lic # Creating a secret using the art.lic file
+  sleep 30
+  echo "INFO: Deploying Artifactory HA.
+"
+  helm install artifactory-ha -f service.yaml -f values.yaml --set artifactory.license.secret=artifactory-cluster-license,artifactory.license.dataKey=art.lic --set nginx.service.type=NodePort jfrog/artifactory-ha
 
-kubectl create secret generic artifactory-cluster-license --from-file=art.lic # Creating a secret using the art.lic file
+  grep "$GCP_EXTERNAL_IP artifactory.org" /etc/hosts > /dev/null 2>&1 || echo "$GCP_EXTERNAL_IP artifactory.org" >> /etc/hosts # Adding External GCP IP Address to /etc/hosts
 
-helm install artifactory-ha -f service.yaml -f values.yaml --set artifactory.license.secret=artifactory-cluster-license,artifactory.license.dataKey=art.lic --set nginx.service.type=NodePort jfrog/artifactory-ha
+  echo "
+The deployment has finished successfuly, the cluster will start in 4 minutes.."
+  sleep 240
 
-grep "$GCP_EXTERNAL_IP artifactory.org" /etc/hosts > /dev/null 2>&1 || echo "$GCP_EXTERNAL_IP artifactory.org" >> /etc/hosts # Adding External GCP IP Address to /etc/hosts
-
-if ! [ -d k8s-files ]; then
-sudo mkdir k8s-files
-fi
-mv art.lic k8s-files/
-mv service.yaml k8s-files/
-mv values.yaml k8s-files/
-echo "
-The deployment has finished successfuly, this will take 4 minutes.."
-sleep 240
-
-echo "
+  echo "
 ##################################
 ### Deployment was successful! ###
 ##################################
 
 Awesome mister guy/gal, everything should work in a few minutes.
-While your cluster is starting up, you'll need to edit your local machine's '/etc/hosts' file and add the machine IP:
+Now that the cluster is up, you may edit your local machine's '/etc/hosts' file and add the machine IP:
 
 $GCP_EXTERNAL_IP artifactory.org
 
 Now you can access http://artifactory.org from your local machine :)
 "
+fi
 
-#Xray installation
-#helm install xray --set xray.joinKey=${JOIN_KEY} --set xray.jfrogUrl=${JFROG_URL} jfrog/xray
+if ! [ -d k8s-files ]; then
+  sudo mkdir k8s-files
+fi
+
+mv service.yaml k8s-files/
+mv values.yaml k8s-files/
+
+if [ -f art.lic ]; then
+  mv art.lic k8s-files/
+fi
+
+if [ "$init" = "Prepare a Kubernetes environment" ]; then
+  echo "
+############################################
+### Your Kubernetes environemnt is ready! ###
+############################################
+"
+fi
