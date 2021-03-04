@@ -8,12 +8,12 @@ fi
 
 # Variables
 start=$(date +%s.%N)
-username=$1
-password=$2
-artifactory_url=$3
-if [ -z "$username" ]; then echo "No Username provided, add the username and password as follows: $./pi-init.sh username password server"; exit 1; fi
-if [ -z "$password" ]; then echo "No password entered, add the username and password as follows: $./pi-init.sh username password server"; exit 1; fi
-if [ -z "$artifactory_url" ]; then echo "No Artifactory server name entered, add the server name as follows: $./pi-init.sh username password server"; exit 1; fi
+echo "Enter your Artifactory user name: "
+read username
+echo "Enter you user name API Key: "
+read password
+echo "Enter you Artifactory Cloud server name: "
+read artifactory_url
 
 echo "
 ###################################
