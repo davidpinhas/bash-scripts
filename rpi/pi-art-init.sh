@@ -8,11 +8,11 @@ fi
 
 # Variables
 start=$(date +%s.%N)
-email=$1
+username=$1
 password=$2
 artifactory_url=$3
-if [ -z "$email" ]; then echo "No email provided, add the email and password as follows: $./pi-init.sh username password server"; exit 1; fi
-if [ -z "$password" ]; then echo "No password entered, add the email and password as follows: $./pi-init.sh username password server"; exit 1; fi
+if [ -z "$username" ]; then echo "No Username provided, add the username and password as follows: $./pi-init.sh username password server"; exit 1; fi
+if [ -z "$password" ]; then echo "No password entered, add the username and password as follows: $./pi-init.sh username password server"; exit 1; fi
 if [ -z "$artifactory_url" ]; then echo "No Artifactory server name entered, add the server name as follows: $./pi-init.sh username password server"; exit 1; fi
 
 echo "
@@ -27,7 +27,7 @@ if [ ! -d /etc/apt/auth.conf.d ]; then sudo mkdir -p /etc/apt/auth.conf.d >/dev/
 if [ -d "/etc/apt/sources.list" ]; then rm -Rf /etc/apt/sources.list; fi
 if [ -d "/etc/apt/sources.list.d/raspi.list" ]; then rm -Rf /etc/apt/sources.list.d/raspi.list; fi
 if [ -d "/etc/apt/auth.conf.d/artifactory.conf" ]; then rm -Rf /etc/apt/auth.conf.d/artifactory.conf; fi
-sudo echo "machine $artifactory_url.jfrog.io login $email password $password" >> /etc/apt/auth.conf.d/artifactory.conf
+sudo echo "machine $artifactory_url.jfrog.io login $username password $password" >> /etc/apt/auth.conf.d/artifactory.conf
 
 # Configure /etc/apt/sources.list with Artifactory
 echo "INFO: Creating configuration files"
@@ -44,7 +44,7 @@ EOF
 # Create /etc/pip/pip.conf
 sudo cat <<EOF > /etc/pip/pip.conf
 [global]
-index-url = https://$email:$password@$artifactory_url.jfrog.io/artifactory/api/pypi/pypi/simple
+index-url = https://$username:$password@$artifactory_url.jfrog.io/artifactory/api/pypi/pypi/simple
 EOF
 # Create .pypirc
 sudo cat <<EOF > /root/.pypirc
@@ -52,7 +52,7 @@ sudo cat <<EOF > /root/.pypirc
 index-servers = local
 [local]
 repository: https://$artifactory_url.jfrog.io/artifactory/api/pypi/pypi
-username: $email
+username: $username
 password: $password
 EOF
 
