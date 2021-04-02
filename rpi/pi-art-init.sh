@@ -93,6 +93,7 @@ echo "
 #########################"
 sudo apt-get install -y tree vim git bluetooth python3-pip i2c-tools locate zsh-syntax-highlighting zsh bc -o Acquire::ForceIPv4=true >/dev/null 2>&1
 sudo apt-get install -y tree vim git bluetooth python3-pip i2c-tools locate zsh-syntax-highlighting zsh bc -o Acquire::ForceIPv4=true
+sudo apt-get full-upgrade -y >/dev/null 2>&1
 sudo apt-get full-upgrade -y
 sudo rpi-update
 yes | sudo sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" >/dev/null 2>&1
