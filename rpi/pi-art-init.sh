@@ -32,8 +32,6 @@ sudo echo "machine $artifactory_url.jfrog.io login $username password $password"
 # Configure /etc/apt/sources.list with Artifactory
 echo "INFO: Creating configuration files"
 sudo cat <<EOF > /etc/apt/sources.list
-deb [trusted=yes] https://$artifactory_url.jfrog.io/artifactory/raspbian jessie main contrib non-free rpi
-deb [trusted=yes] https://$artifactory_url.jfrog.io/artifactory/raspbian stretch main contrib non-free rpi
 deb [trusted=yes] https://$artifactory_url.jfrog.io/artifactory/raspbian buster main contrib non-free rpi
 EOF
 # Create /etc/vim/.vimrc
