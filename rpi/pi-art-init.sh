@@ -93,20 +93,20 @@ echo "
 #########################"
 sudo apt-get install -y tree vim git bluetooth python3-pip i2c-tools locate zsh-syntax-highlighting zsh bc -o Acquire::ForceIPv4=true >/dev/null 2>&1
 sudo apt-get install -y tree vim git bluetooth python3-pip i2c-tools locate zsh-syntax-highlighting zsh bc -o Acquire::ForceIPv4=true
+sudo apt-get full-upgrade -y
+sudo rpi-update
 yes | sudo sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" >/dev/null 2>&1
 sudo chsh -s /bin/zsh
 echo "
 #####################
 ## Script Finished ##
 #####################
-All Done, the system will automatically reboot!!
+All Done, the system will automatically reboot!
 
 To change the ZSH theme, run this command:
 $ sed -e 's/robbyrussell/avit/g' /root/.zshrc
 
-In order for the static IP configuration to take affect, a restart to the system is required.
-
-Don't forget to change your password!!!!!
+Don't forget to change your password!!!
 $ passwd"
 duration=$(echo "$(date +%s.%N) - $start" | bc)
 execution_time=`printf "%.2f seconds" $duration`
