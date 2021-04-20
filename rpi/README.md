@@ -44,6 +44,7 @@ docker run --init -d --name="home-assistant" -e "TZ=Asia/Jerusalem" -v /Users/pi
 ```
 Running the HA Supervisor Docker container:
 ```
+curl -sL "https://raw.githubusercontent.com/Kanga-Who/home-assistant/master/supervised-installer.sh" > supervised-installer.sh
 bash supervised-installer.sh -m raspberrypi4
 ```
 Configure Home assistant Supervisor services:
