@@ -63,7 +63,7 @@ $ system cat pi-hassio-apparmor.service
  WantedBy=multi-user.target
 ```
 ```
-system cat pi-hassio-supervisor.service
+$ system cat pi-hassio-supervisor.service
  [Unit]
  Description=Hass.io supervisor
  Requires=docker.service
