@@ -1,4 +1,4 @@
-# **RPi Configuration with Artifactory Script Docs**
+# **RPi Configuration with Artifactory Script**
 
 ## **Description**
 
