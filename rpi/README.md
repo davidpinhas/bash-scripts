@@ -48,7 +48,7 @@ bash supervised-installer.sh -m raspberrypi4
 ```
 Configure Home assistant Supervisor services:
 ```
-$ system cat $USERNAME-hassio-apparmor.service
+$ system cat pi-hassio-apparmor.service
  [Unit]
  Description=Hass.io AppArmor
  Wants=hassio-supervisor.service
@@ -63,7 +63,7 @@ $ system cat $USERNAME-hassio-apparmor.service
  WantedBy=multi-user.target
 ```
 ```
-system cat $USERNAME-hassio-supervisor.service
+system cat pi-hassio-supervisor.service
  [Unit]
  Description=Hass.io supervisor
  Requires=docker.service
