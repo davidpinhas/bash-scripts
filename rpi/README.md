@@ -82,7 +82,7 @@ system cat $USERNAME-hassio-supervisor.service
 ```
 - Hacs - [Installation | HACS](https://hacs.xyz/docs/installation/installation)
 - Node-RED - [hassio-addons/addon-node-red](https://github.com/hassio-addons/addon-node-red/blob/main/node-red/DOCS.md)
-- Animated Backgrouds - [Villhellm/lovelace-animated-background](https://github.com/Villhellm/lovelace-animated-background)
+- Animated Backgrounds - [Villhellm/lovelace-animated-background](https://github.com/Villhellm/lovelace-animated-background)
 
 ### **Sources:**
 
