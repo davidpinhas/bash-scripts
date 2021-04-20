@@ -96,6 +96,9 @@ sudo apt-get install -y tree vim git bluetooth python3-pip i2c-tools locate zsh-
 sudo apt-get full-upgrade -y >/dev/null 2>&1
 sudo apt-get full-upgrade -y
 sudo rpi-update
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker Pi
 yes | sudo sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" >/dev/null 2>&1
 sudo chsh -s /bin/zsh
 echo "
