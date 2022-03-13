@@ -145,28 +145,13 @@ EOF
     mkdir -p /etc/mysql/certificates
     cd /etc/mysql/certificates
     openssl genrsa 2048 > ca-key.pem
-    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=ca.pe-demo.com" \
-        -new -x509 -nodes -days 365000 \
-        -key /etc/mysql/certificates/ca-key.pem \
-        -out /etc/mysql/certificates/ca-cert.pem
-    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=server.pe-demo.com" \
-        -newkey rsa:2048 -days 365000 -nodes \
-        -keyout /etc/mysql/certificates/server-key.pem \
-        -out /etc/mysql/certificates/server-req.pem
+    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=ca.pe-demo.com" -new -x509 -nodes -days 365000 -key /etc/mysql/certificates/ca-key.pem -out /etc/mysql/certificates/ca-cert.pem
+    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=server.pe-demo.com" -newkey rsa:2048 -days 365000 -nodes -keyout /etc/mysql/certificates/server-key.pem -out /etc/mysql/certificates/server-req.pem
     openssl rsa -in /etc/mysql/certificates/server-key.pem -out /etc/mysql/certificates/server-key.pem
-    openssl x509 -req -in /etc/mysql/certificates/server-req.pem \
-        -days 365000 -CA /etc/mysql/certificates/ca-cert.pem \
-        -CAkey /etc/mysql/certificates/ca-key.pem -set_serial 01 \
-        -out /etc/mysql/certificates/server-cert.pem
-    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=client.pe-demo.com" \
-        -newkey rsa:2048 -days 365000 -nodes \
-        -keyout /etc/mysql/certificates/client-key.pem \
-        -out /etc/mysql/certificates/client-req.pem
+    openssl x509 -req -in /etc/mysql/certificates/server-req.pem -days 365000 -CA /etc/mysql/certificates/ca-cert.pem -CAkey /etc/mysql/certificates/ca-key.pem -set_serial 01 -out /etc/mysql/certificates/server-cert.pem
+    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=client.pe-demo.com" -newkey rsa:2048 -days 365000 -nodes -keyout /etc/mysql/certificates/client-key.pem -out /etc/mysql/certificates/client-req.pem
     openssl rsa -in /etc/mysql/certificates/client-key.pem -out /etc/mysql/certificates/client-key.pem
-    openssl x509 -req -in client-req.pem -days 365000 \
-        -CA /etc/mysql/certificates/ca-cert.pem \
-        -CAkey /etc/mysql/certificates/ca-key.pem -set_serial 01 \
-        -out /etc/mysql/certificates/client-cert.pem
+    openssl x509 -req -in client-req.pem -days 365000 -CA /etc/mysql/certificates/ca-cert.pem -CAkey /etc/mysql/certificates/ca-key.pem -set_serial 01 -out /etc/mysql/certificates/client-cert.pem
     chmod 644 *
 
     # DB Encryption Keys
