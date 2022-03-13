@@ -47,8 +47,7 @@ then
 
     # Configuring Firewall
     echo "INFO: Configuring firewall"
-    sudo ufw deny 'HTTP'
-    sudo ufw allow 'Nginx HTTPS'
+    sudo ufw allow 'Nginx Full'
     sudo ufw allow 3306
     yes | sudo ufw enable
 
