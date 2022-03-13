@@ -27,7 +27,17 @@ then
     ip_addr=`echo $ip_addr | sed 's/ *$//g'` # Cleaning trailing spaces
     sudo apt update
     sudo apt upgrade -y
-    sudo apt install -y vim curl wget nginx php-fpm php-cli php-mysql unzip ca-certificates mariadb-server expect
+    sudo apt install -y vim \
+    curl \
+    wget \
+    nginx \
+    php-fpm \
+    php-cli \
+    php-mysql \
+    unzip \
+    ca-certificates \
+    mariadb-server \
+    expect
 
     # Retrieving Demo Site to path /var/www/html
     echo "INFO: Downloading demo web-page"
@@ -38,7 +48,7 @@ then
 
     # Configuring Firewall
     echo "INFO: Configuring firewall"
-    sudo ufw allow 'Nginx Full'
+    sudo ufw deny 'HTTP'
     sudo ufw allow 'Nginx HTTPS'
     sudo ufw allow 3306
     yes | sudo ufw enable
@@ -46,7 +56,9 @@ then
     #Generating SSL certificates for Nginx
     echo "INFO: Generating SSL certificate for Nginx"
     sudo mkdir /etc/nginx/ssl
-    sudo openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=pe-demo.com" -newkey rsa:2048 -nodes -keyout /etc/nginx/ssl/key.pem -x509 -days 365 -out /etc/nginx/ssl/certificate.pem
+    sudo openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=pe-demo.com" \
+    -newkey rsa:2048 -nodes -keyout /etc/nginx/ssl/key.pem \
+    -x509 -days 365 -out /etc/nginx/ssl/certificate.pem
     # certbot --nginx -d pe-demo.duckdns.org -d www.pe-demo.duckdns.org --non-interactive --agree-tos -m davidp@test.com
 
     # Configuring Nginx
@@ -56,16 +68,16 @@ then
     echo "127.0.0.1 pe-demo.com www.pe-demo.com" >> /etc/hosts
     sudo cat <<'EOF' > /etc/nginx/sites-available/www.pe-demo.com.conf
 # LEMP STACK DEMO NGINX CONFIGURATION
+ssl_certificate		/etc/nginx/ssl/certificate.pem;
+ssl_certificate_key	/etc/nginx/ssl/key.pem;
+ssl_session_cache	shared:SSL:1m;
+
 server {
     listen 80;
 
     server_name pe-demo.com www.pe-demo.com;
     return 301 https://www.pe-demo.com$request_uri;
 }
-
-ssl_certificate		/etc/nginx/ssl/certificate.pem;
-ssl_certificate_key	/etc/nginx/ssl/key.pem;
-ssl_session_cache	shared:SSL:1m;
 
 server {
     listen 443 ssl;
@@ -103,9 +115,9 @@ EOF
     echo "INFO: Configuring PHP"
     echo "<?php include 'index.html';?>" > /var/www/html/www.pe-demo.com/index.php
     sudo cat <<'EOF' > /var/www/html/www.pe-demo.com/info.php
-    <?php
-        phpinfo();
-    ?>
+<?php
+    phpinfo();
+?>
 EOF
 
     # Configuring MariaDB with mysql_secure_installation
@@ -135,54 +147,83 @@ EOF
     mkdir -p /etc/mysql/certificates
     cd /etc/mysql/certificates
     openssl genrsa 2048 > ca-key.pem
-    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=ca.pe-demo.com" -new -x509 -nodes -days 365000 -key /etc/mysql/certificates/ca-key.pem -out /etc/mysql/certificates/ca-cert.pem
-    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=server.pe-demo.com" -newkey rsa:2048 -days 365000 -nodes -keyout /etc/mysql/certificates/server-key.pem -out /etc/mysql/certificates/server-req.pem
+    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=ca.pe-demo.com" \
+        -new -x509 -nodes -days 365000 \
+        -key /etc/mysql/certificates/ca-key.pem \
+        -out /etc/mysql/certificates/ca-cert.pem
+    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=server.pe-demo.com" \
+        -newkey rsa:2048 -days 365000 -nodes \
+        -keyout /etc/mysql/certificates/server-key.pem \
+        -out /etc/mysql/certificates/server-req.pem
     openssl rsa -in /etc/mysql/certificates/server-key.pem -out /etc/mysql/certificates/server-key.pem
-    openssl x509 -req -in /etc/mysql/certificates/server-req.pem -days 365000 -CA /etc/mysql/certificates/ca-cert.pem -CAkey /etc/mysql/certificates/ca-key.pem -set_serial 01 -out /etc/mysql/certificates/server-cert.pem
-    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=client.pe-demo.com" -newkey rsa:2048 -days 365000 -nodes -keyout /etc/mysql/certificates/client-key.pem -out /etc/mysql/certificates/client-req.pem
+    openssl x509 -req -in /etc/mysql/certificates/server-req.pem \
+        -days 365000 -CA /etc/mysql/certificates/ca-cert.pem \
+        -CAkey /etc/mysql/certificates/ca-key.pem -set_serial 01 \
+        -out /etc/mysql/certificates/server-cert.pem
+    openssl req -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=client.pe-demo.com" \
+        -newkey rsa:2048 -days 365000 -nodes \
+        -keyout /etc/mysql/certificates/client-key.pem \
+        -out /etc/mysql/certificates/client-req.pem
     openssl rsa -in /etc/mysql/certificates/client-key.pem -out /etc/mysql/certificates/client-key.pem
-    openssl x509 -req -in client-req.pem -days 365000 -CA /etc/mysql/certificates/ca-cert.pem -CAkey /etc/mysql/certificates/ca-key.pem -set_serial 01 -out /etc/mysql/certificates/client-cert.pem
+    openssl x509 -req -in client-req.pem -days 365000 \
+        -CA /etc/mysql/certificates/ca-cert.pem \
+        -CAkey /etc/mysql/certificates/ca-key.pem -set_serial 01 \
+        -out /etc/mysql/certificates/client-cert.pem
     chmod 644 *
 
     # DB Encryption Keys
     echo "INFO: Generating encryption keys for MariaDB"
     mkdir -p /etc/mysql/encryption
     cd /etc/mysql/encryption
-    for i in {1..4}; do openssl rand -hex 32 >> /etc/mysql/encryption/keyfile;  done;
-    openssl rand -hex 128 > keyfile.key
-    openssl enc -aes-256-cbc -md sha1 -pass file:keyfile.key -in keyfile -out keyfile.enc
-    sudo chown -R mysql:root /etc/mysql/encryption
-    sudo chmod 500 /etc/mysql/encryption/
-    chmod 400 /etc/mysql/encryption/keyfile.enc /etc/mysql/encryption/keyfile.key
-    chmod 644 /etc/mysql/mariadb.conf.d/encryption.cnf
-
+    echo -n "1;"$(openssl rand -hex 32) > keys
+    echo -n "
+2;"$(openssl rand -hex 32) >> keys
+    echo -n "
+3;"$(openssl rand -hex 32) >> keys
+    echo -n "
+4;"$(openssl rand -hex 32) >> keys
+    openssl rand -hex 128 > password_file
+    openssl enc -aes-256-cbc -md sha1 -pass file:password_file -in keys -out keys.enc
+     
     # Configuring MariaDB with Keys
     echo "INFO: Setting keys for MariaDB 50-server.cnf file"
+    echo "[mariadb]
+# File Key Management
+plugin_load_add = file_key_management
+file_key_management_filename = /etc/mysql/encryption/keys.enc
+file_key_management_filekey = FILE:/etc/mysql/encryption/password_file
+file_key_management_encryption_algorithm = aes_cbc
+
+# InnoDB/XtraDB Encryption Setup
+innodb_default_encryption_key_id = 1
+innodb_encrypt_tables = ON
+innodb_encrypt_log = ON
+innodb_encryption_threads = 4
+
+# Aria Encryption Setup
+aria_encrypt_tables = ON
+
+# Temp & Log Encryption
+encrypt-tmp-disk-tables = 1
+encrypt-tmp-files = 1
+encrypt_binlog = ON" > /etc/mysql/mariadb.conf.d/encryption.cnf
+    cd /etc/mysql/
+    sudo chown -R mysql:root ./encryption 
+    sudo chmod 500 /etc/mysql/encryption/
+    cd ./encryption
+    chmod 400 keys.enc password_file 
+    chmod 644 encryption.cnf
+    sudo service mariadb restart
     echo "
-    # File Key Management
-    plugin_load_add = file_key_management
-    file_key_management_filename = /etc/mysql/encryption/keyfile.enc
-    file_key_management_filekey = FILE:/etc/mysql/encryption/keyfile.key
-    file_key_management_encryption_algorithm = aes_cbc
-
-    # InnoDB/XtraDB Encryption Setup
-    innodb_default_encryption_key_id = 1
-    innodb_encrypt_tables = ON
-    innodb_encrypt_log = ON
-    innodb_encryption_threads = 4
-
-    # Aria Encryption Setup
-    aria_encrypt_tables = ON
-
-    # Temp & Log Encryption
-    encrypt-tmp-disk-tables = 1
-    encrypt-tmp-files = 1
-    encrypt_binlog = ON" > /etc/mysql/mariadb.conf.d/encryption.cnf
+# SSL Configuration
+ssl_cert = /etc/mysql/certificates/server-cert.pem
+ssl_key = /etc/mysql/certificates/server-key.pem
+ssl_ca = /etc/mysql/certificates/ca-cert.pem" >> /etc/mysql/mariadb.conf.d/50-server.cnf
     echo "
-    # SSL Configuration
-    ssl_cert = /etc/mysql/certificates/server-cert.pem
-    ssl_key = /etc/mysql/certificates/server-key.pem
-    ssl_ca = /etc/mysql/certificates/ca-cert.pem" >> /etc/mysql/mariadb.conf.d/50-server.cnf
+# SSL Configuration
+ssl_cert = /etc/mysql/certificates/client-cert.pem
+ssl_key = /etc/mysql/certificates/client-key.pem
+ssl_ca = /etc/mysql/certificates/ca-cert.pem" >> /etc/mysql/mariadb.conf.d/50-client.cnf
     sudo service mysql restart
 
     # Creating DB and Table
@@ -194,11 +235,20 @@ EOF
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP \
     );"
     # Creating User and Granting Permissions
+    sudo mysql -u root -p=pass -D testdb -e "alter table users ENCRYPTED=Yes;"
     sudo mysql -u root -p=pass -e "CREATE USER 'test'@localhost IDENTIFIED BY 'pass';"
-    sudo mysql -u root -p=pass -D testdb -e "SELECT NAME, ENCRYPTION_SCHEME, CURRENT_KEY_ID FROM information_schema.INNODB_TABLESPACES_ENCRYPTION WHERE NAME='testdb/users';"
     sudo mysql -u root -p=pass -e "GRANT ALL ON testdb.* TO 'test'@localhost;"
     sudo mysql -u root -p=pass -e "FLUSH PRIVILEGES;"
-
+    echo "
+#####################
+### Running Tests ###
+#####################
+"
+openssl s_client -connect 127.0.0.1:3306 -tls1_2
+sudo mysql -u root -p=pass -e "show variables like 'have_ssl';"
+sudo mysql -u root -p=pass -D testdb -e "SELECT NAME, ENCRYPTION_SCHEME, CURRENT_KEY_ID FROM information_schema.INNODB_TABLESPACES_ENCRYPTION WHERE NAME='testdb/users';"
+    echo "
+Verify the above has SSL, encryption and tls1_2 available."
     echo "
 ################
 ### All Done ###
@@ -214,7 +264,5 @@ To enhance Nginx performance, add the below directives to the /etc/nginx/nginx.c
         send_timeout 10;
 
 Update your local machine /etc/hosts:
-echo '${ip_addr} pe-demo.com www.pe-demo.com' >> /etc/hosts
-
-curl ${ip_addr}/login.php to make sure everything is up and running"
+echo '${ip_addr} pe-demo.com www.pe-demo.com' >> /etc/hosts"
 fi
