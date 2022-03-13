@@ -28,7 +28,6 @@ then
     sudo apt update
     sudo apt upgrade -y
     sudo apt install -y vim \
-    curl \
     wget \
     nginx \
     php-fpm \
