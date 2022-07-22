@@ -1,4 +1,4 @@
-#!/bin/bash 1
+#!/bin/bash
 # Verify root
 if [[ $(/usr/bin/id -u) -ne 0 ]]; then
     echo "WARN: Not Sudo user. Please run as root."
